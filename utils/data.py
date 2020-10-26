@@ -31,5 +31,3 @@ class StutterData(Dataset):
     
     def visualize(self,idx):
         librosa.display.specshow(sd[idx]['mfcc'], x_axis='time')
-        
-def 
