@@ -4,17 +4,20 @@ import glob
 from torch.utils.data import Dataset
 import numpy as np
 import torch 
-from torch.utils.data.sampler import SubsetRandomSampler
+from torch.utils.data.sampler import SubsetRandomSampler, SequentialSampler
 
 class StutterData(Dataset):
     
-    def __init__(self, root_dir):
+    def __init__(self, root_dir, single_file=False):
         self.root_dir = root_dir
         self.files = []
         
-        for path in glob.glob(root_dir):
-            self.files.append(path)
-            
+        if single_file:
+            self.files.append(root_dir)
+        else:
+            for path in glob.glob(root_dir):
+                self.files.append(path)
+
     def __len__(self):
         return len(self.files)
     
@@ -44,11 +47,14 @@ def load_data(dataset, batch_size, validation_split=0.2, shuffle_dataset=True, r
     if shuffle_dataset :
         np.random.seed(random_seed)
         np.random.shuffle(indices)
-    train_indices, val_indices = indices[split:], indices[:split]
-
-    train_sampler = SubsetRandomSampler(train_indices)
-    valid_sampler = SubsetRandomSampler(val_indices)
-
+    train_indices, val_indices = indices[:dataset_size-split], indices[dataset_size-split:]
+    
+    if shuffle_dataset:
+        train_sampler = SubsetRandomSampler(train_indices)
+        valid_sampler = SubsetRandomSampler(val_indices)
+    else:
+        train_sampler = SequentialSampler(train_indices)
+        valid_sampler = SequentialSampler(val_indices)
     train_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, 
                                                sampler=train_sampler)
     validation_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size,
